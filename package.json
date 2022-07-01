@@ -1,0 +1,23 @@
+{
+  "name": "permissionsserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hsahinovic1/permissionsServer.git"
+  },
+  "author": "Hamza Sahinovic",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hsahinovic1/permissionsServer/issues"
+  },
+  "homepage": "https://github.com/hsahinovic1/permissionsServer#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
+}

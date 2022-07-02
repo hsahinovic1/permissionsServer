@@ -25,31 +25,31 @@ Group.belongsToMany(User, {
     through: UserGroup
   });
 
-User.belongsToMany(Permission, {
-    through: PermObjUser
+User.hasMany(PermObjUser, {
+    foreignKey: 'user_id'
   });
-Permission.belongsToMany(User, {
-    through: PermObjUser
+Permission.hasMany(PermObjUser, {
+    foreignKey: 'permission_id'
   });
-Object.belongsToMany(Permission, {
-    through: PermObjUser
+Object.hasMany(PermObjUser, {
+    foreignKey: 'object_id'
   });
-Permission.belongsToMany(Object, {
-    through: PermObjUser
-  });
+  PermObjUser.belongsTo(User, { targetKey: 'id', foreignKey: 'user_id' });
+  PermObjUser.belongsTo(Permission, { targetKey: 'id', foreignKey: 'permission_id' });
+  PermObjUser.belongsTo(Object, { targetKey: 'id', foreignKey: 'object_id' });
 
-Group.belongsToMany(Permission, {
-    through: PermObjGroup
+Group.hasMany(PermObjGroup, {
+    foreignKey: 'group_id'
   });
-Permission.belongsToMany(Group, {
-    through: PermObjGroup
+Permission.hasMany(PermObjGroup, {
+    foreignKey: 'permission_id'
   });
-Object.belongsToMany(Permission, {
-    through: PermObjGroup
+Object.hasMany(PermObjGroup, {
+    foreignKey: 'object_id'
   });
-Permission.belongsToMany(Object, {
-    through: PermObjGroup
-  });
+  PermObjGroup.belongsTo(Group, { targetKey: 'id', foreignKey: 'group_id' });
+  PermObjGroup.belongsTo(Permission, { targetKey: 'id', foreignKey: 'permission_id' });
+  PermObjGroup.belongsTo(Object, { targetKey: 'id', foreignKey: 'object_id' });
 
   sequelize
   .sync()

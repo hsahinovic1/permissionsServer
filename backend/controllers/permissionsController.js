@@ -1,30 +1,37 @@
 import User from "../models/UserModel.js";
-import Group from "./models/GroupModel.js";
-import Permission from "./models/PermissionModel.js";
-import Object from "./models/ObjectModel.js";
-import UserGroup from "./models/UsersGroupsModel.js";
-import PermObjGroup from "./models/PermObjGroupModel.js";
-import PermObjUser from "./models/PermObjUserModel.js";
-import { addAbortSignal } from "stream";
+import Group from "../models/GroupModel.js";
+import Permission from "../models/PermissionModel.js";
+import Object from "../models/ObjectModel.js";
+import UserGroup from "../models/UsersGroupsModel.js";
+import PermObjGroup from "../models/PermObjGroupModel.js";
+import PermObjUser from "../models/PermObjUserModel.js";
 
 // @desc    add user to a group
-// @route   POST /permissions
+// @route   POST /permissions/addUser
 const addUserToGroup = async (req, res) => {
     try {
         const { userName, groupName } = req.body;
 
-        let user = await User.findOrCreate({ where: { username: userName } });
-        let group = await Group.findOrCreate({ where: { name: groupName } });
-
-        UserGroup.create({
-            userId: user.id,
-            groupId: group.id
-        }).then(data => {
+        let user = await User.findOrCreate({ where: { username: userName }, raw: true }).catch(err => {
+            res.status(500).send({
+                message: "Error occurred while adding user to a group."
+            })
+        });
+        let group = await Group.findOrCreate({ where: { name: groupName }, raw: true }).catch(err => {
+            res.status(500).send({
+                message: "Error occurred while adding user to a group2."
+            })
+        });
+        
+        UserGroup.findOrCreate({
+            where:{
+            userId: user[0].id,
+            groupId: group[0].id
+        }}).then(data => {
             res.send(data);
         }).catch(err => {
             res.status(500).send({
-                message:
-                    e.message || "Error occurred while adding user to a group."
+                message: err.message || "Error occurred while adding user to a group3."
             })
         });
     } catch (e) {
@@ -33,15 +40,19 @@ const addUserToGroup = async (req, res) => {
 }
 
 // @desc    remove all users from group
-// @route   DELETE /permissions
+// @route   DELETE /permissions/removeUsers
 const removeUsersFromGroup = async (req, res) => {
     try {
         const { groupName } = req.body;
 
-        let group = await Group.findOrCreate({ where: { name: groupName } });
+        let group = await Group.findOrCreate({ where: { name: groupName }, raw: true }).catch(err => {
+            res.status(500).send({
+                message: "Error removing users from a group."
+            })
+        });
 
-        Group.destroy({
-            where: { groupId: group.id }
+        UserGroup.destroy({
+            where: { groupId: group[0].id }
         })
             .then(num => {
                 if (num == 1) {
@@ -66,46 +77,49 @@ const removeUsersFromGroup = async (req, res) => {
 }
 
 // @desc    add permission to a user or a group
-// @route   POST /permissions
+// @route   POST /permissions/addPermission
 const addPermission = async (req, res) => {
     try {
         const { name, permissionName, objectName } = req.body;
 
-        let user = await User.findOne({ where: { username: name } });
-        let group = await Group.findOne({ where: { name: name } });
-        let permission = await Permission.findOne({ where: { name: permissionName } });
-        let object = await Object.findOne({ where: { name: objectName } });
+        let user = await User.findOne({ where: { username: name }, raw: true });
+        let group = await Group.findOne({ where: { name: name }, raw: true });
+        let permission = await Permission.findOrCreate({ where: { name: permissionName }, raw: true  });
+        let object = await Object.findOrCreate({ where: { name: objectName }, raw: true  });
 
-        if (user == null && group == null) {
-            user = await User.findOrCreate({ where: { username: name } });
+        if (user === null && group === null) {
+            user = await User.create({   username: name , raw: true  });
         }
-
-
+        
         if (group) {
-            PermObjGroup.create({
-                permission_id: permission.id,
+            PermObjGroup.findOrCreate({
+                where:{
+                permission_id: permission[0].id,
                 group_id: group.id,
-                object_id: object.id
+                object_id: object[0].id
+                }
             }).then(data => {
                 res.send(data);
             }).catch(err => {
                 res.status(500).send({
                     message:
-                        e.message || "Error occurred while adding permission to a group."
+                    err.message || "Error occurred while adding permission to a group."
                 })
             });
         }
         else {
-            PermObjUser.create({
+            PermObjUser.findOrCreate({
+                where:{
                 user_id: user.id,
-                permission_id: permission.id,
-                object_id: object.id
+                permission_id: permission[0].id,
+                object_id: object[0].id
+                }
             }).then(data => {
                 res.send(data);
             }).catch(err => {
                 res.status(500).send({
                     message:
-                        e.message || "Error occurred while adding permission to a user."
+                    err.message || "Error occurred while adding permission to a user."
                 })
             });
         }
@@ -115,16 +129,17 @@ const addPermission = async (req, res) => {
 }
 
 // @desc    remove all permisions for a group or user
-// @route   DELETE /permissions
+// @route   DELETE /permissions/removePermissions
 const removeAllPermissions = async (req, res) => {
     try {
         const { name } = req.body;
 
 
-        let user = await User.findOrCreate({ where: { username: name } });
-        let group = await Group.findOrCreate({ where: { name: name } });
-
-
+        let user = await User.findOne({ where: { username: name }, raw: true });
+        let group = await Group.findOne({ where: { name: name }, raw: true });
+        if (user === null && group === null) {
+            user = await User.create({ username: name , raw: true  });
+        }
 
         if (group) {
             PermObjGroup.destroy({
@@ -174,46 +189,55 @@ const removeAllPermissions = async (req, res) => {
 }
 
 // @desc    for testing if a particular user has a particular permission over a particular object.
-// @route   GET /permissions
+// @route   POST /permissions/testPermission
 const testPermission = async (req, res) => {
     try {
         const { name, permissionName, objectName } = req.body;
 
-        let user = await User.findOrCreate({ where: { username: name } });
-        let permission = await Permission.findOrCreate({ where: { name: permissionName } });
-        let object = await Object.findOrCreate({ where: { name: objectName } });
+        let user = await User.findOrCreate({ where: { username: name }, raw: true});
+        let permission = await Permission.findOrCreate({ where: { name: permissionName }, raw: true });
+        let object = await Object.findOrCreate({ where: { name: objectName }, raw: true });
 
         let sol = await PermObjUser.findOne({
             where: {
-                user_id: user.id,
-                permission_id: permission.id,
-                object_id: object.id
+                user_id: user[0].id,
+                permission_id: permission[0].id,
+                object_id: object[0].id
             }
         })
         if (sol === null) {
 
-            sol = await PermObjGroup({
-                where: {
-                    permission_id: permission.id,
-                    object_id: object.id,
+            sol = await UserGroup.findAll({
+                where:{
+                    userId: user[0].id
                 },
-                include: {
-                    model: PermObjGroup,
-                    where: {
-                        group_id: { $col: 'PermObjGroup.group_id' },
-                        user_id: user.id
+                include: 
+                    {
+                    model: Group,
+                    include: {
+                        model: PermObjGroup,
+                        where: {
+                            permission_id: permission[0].id,
+                            object_id: object[0].id
+                        }
                     }
                 }
             })
         }
-        if (sol === null) {
+        else {
             res.send({
-                message: "Permission was not found!"
+                message: "Permission found in users permissions!"
             });
         }
-        res.send({
-            message: "Permission was found successfully!"
+        sol.forEach(element => {
+            if (element.group !== null) {
+                res.send({
+                    message: "Permission found in group permissions!"
+                });
+            }
         });
+        
+        res.send("Permission was not found");
     }
     catch (e) {
         res.send({ error: e.message });
@@ -221,7 +245,7 @@ const testPermission = async (req, res) => {
 }
 
 // @desc    for querying particular users permissions over a particular object.
-// @route   GET /permissions
+// @route   POST /permissions/getPermissions
 const getPermissions = async (req, res) => {
     try {
         const { name, objectName } = req.body;
@@ -288,3 +312,11 @@ const getPermissions = async (req, res) => {
         res.send({ error: e.message });
     }
 }
+export {
+    addUserToGroup,
+    removeUsersFromGroup,
+    addPermission,
+    removeAllPermissions,
+    testPermission,
+    getPermissions
+  };

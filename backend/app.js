@@ -8,6 +8,7 @@ import Object from "./models/ObjectModel.js";
 import UserGroup from "./models/UsersGroupsModel.js";
 import PermObjGroup from "./models/PermObjGroupModel.js";
 import PermObjUser from "./models/PermObjUserModel.js";
+import permissionsRoutes from "./routes/permissionsRoutes.js";
 
 const app = express()
 
@@ -18,6 +19,15 @@ app.get('/',(req,res)=>{
 
 app.listen(3000, console.log("Server running on port 3000"))
 
+app.use(express.json())
+app.use("/permissions", permissionsRoutes);
+
+app.use(function (req, res, next) {
+  res.status(404);
+  res.json({ error: "Route not found" });
+  next();
+});
+
 User.belongsToMany(Group, {
     through: UserGroup
   });
@@ -25,6 +35,8 @@ User.belongsToMany(Group, {
 Group.belongsToMany(User, {
     through: UserGroup
   });
+
+UserGroup.belongsTo(Group);
 
 User.hasMany(PermObjUser, {
     foreignKey: 'user_id'

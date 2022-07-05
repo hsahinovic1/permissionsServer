@@ -237,7 +237,9 @@ const testPermission = async (req, res) => {
             }
         });
         
-        res.send("Permission was not found");
+        res.send({
+            message: "Permission not found!"
+        });
     }
     catch (e) {
         res.send({ error: e.message });
@@ -250,66 +252,44 @@ const getPermissions = async (req, res) => {
     try {
         const { name, objectName } = req.body;
 
-        let user = await User.findOrCreate({ where: { username: name } });
-        let object = await Object.findOrCreate({ where: { name: objectName } });
+        let user = await User.findOrCreate({ where: { username: name }, raw: true });
+        let object = await Object.findOrCreate({ where: { name: objectName }, raw: true });
 
         let sol = await PermObjUser.findAll({
-            attributes: [],
             where: {
-                user_id: user.id,
-                object_id: object.id
+                user_id: user[0].id,
+                object_id: object[0].id
             },
-            include: [{
-                model: Permission,
-                attributes: 'name',
-                where: {
-                    id: { $col: 'PermObjUser.permission_id' }
-                }
-            },
-            {
+            
+            include: {
+                model:Permission,
+                attributes: ['name']
+            }
+        }).then(sol => 
+            sol.map(sol =>  sol.permission.name)
+          );
+        let sol2 = await Permission.findAll({
+            include: {
                 model: PermObjGroup,
-                attributes: [],
                 where: {
-                    user_id: user.id,
-                    object_id: object.id
+                    object_id: object[0].id
                 },
-                include: [{
-                    model: Permission,
-                    attributes: 'name',
-                    where: {
-                        id: { $col: 'PermObjGroup.permission_id' }
-                    }
-                }]
-
-            }]
-        })
-        if (sol === null) {
-
-            sol = await PermObjGroup.findOne({
-                where: {
-                    permission_id: permission.id,
-                    object_id: object.id,
-                },
-                include: {
-                    model: PermObjGroup,
-                    where: {
-                        group_id: { $col: 'PermObjGroup.group_id' },
-                        user_id: user.id
-                    }
+                include:{
+                    model: Group,
+                    required: true
                 }
-            })
-        }
-        if (sol === null) {
-            res.send({
-                message: "Permission was not found!"
-            });
-        }
-        res.send({
-            message: "Permission was found successfully!"
-        });
+            }
+        }).then(sol2 => 
+            sol2.map(sol2 => sol2.name)
+          );
+        
+          let sol3 = sol + "," + sol2;
+          sol3 = sol3.split(",");
+            res.send([...new Set(sol3)]);
+        
     }
     catch (e) {
-        res.send({ error: e.message });
+       return res.send({ error: e.message });
     }
 }
 export {
@@ -320,3 +300,48 @@ export {
     testPermission,
     getPermissions
   };
+
+//   include: [{
+//     model: Permission,
+   
+//     where: {
+//         id: { $col: 'user_permissions.permission_id' }
+//     }
+// //  }
+// // {
+// //     model: PermObjGroup,
+// //     attributes: [],
+// //     where: {
+// //         user_id: user.id,
+// //         object_id: object.id
+// //     },
+// //     include: [{
+// //         model: Permission,
+// //         attributes: 'name',
+// //         where: {
+// //             id: { $col: 'PermObjGroup.permission_id' }
+// //         }
+// //     }]
+
+// // }]
+// let sol2 = await UserGroup.findAll({
+//     where:{
+//         userId: user[0].id
+//     },
+//     include: 
+//         {
+//         model: Group,
+//         include: {
+//             model: PermObjGroup,
+            
+//             where: {
+//                 object_id: object[0].id
+//             },
+//             include: {
+//                 model: Permission,
+//                 attributes: ['name'],
+//                 right: true
+//             }
+//         }
+//     }
+// })

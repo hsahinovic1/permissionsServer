@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <script src="/public/script.js"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<body onload="permissionsModule.getGroupUsers()">
+
+    <h3>Useri po grupama</h2>
+        <ul id="group-users"  >  
+        </ul>
+        <h3>Sve permisije za usera i grupu</h2>
+        <ul id ="permissions"> 
+        </ul>
+        <p id="Log"></p>
+        <form  method="post">
+        <input type="text" placeholder="Enter Username" name="userName" required>   
+        <input type="text" placeholder="Enter Group name" name="groupName" required>
+        <button type="button" onclick ="permissionsModule.addGroupUser()">Submit</button>   
+        </form>
+    
+
+</body>
+</html>

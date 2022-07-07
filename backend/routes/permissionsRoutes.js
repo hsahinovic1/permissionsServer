@@ -6,7 +6,9 @@ import {
     addPermission,
     removeAllPermissions,
     testPermission,
-    getPermissions
+    getPermissions,
+    getUsersFromGroup,
+    getAllPermissions
   } from "../controllers/permissionsController.js";
 
   const router = express.Router();
@@ -17,5 +19,7 @@ router.post("/addPermission", addPermission);
 router.delete("/removePermissions", removeAllPermissions);
 router.post("/testPermission", testPermission);
 router.post("/getPermissions", getPermissions);
+router.get("/getUsersFromGroup", getUsersFromGroup);
+router.get("/getAllPermissions", getAllPermissions);
 
 export default router;

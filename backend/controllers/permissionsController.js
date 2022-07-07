@@ -13,12 +13,12 @@ const addUserToGroup = async (req, res) => {
     try {
         const { userName, groupName } = req.body;
 
-        let user = await User.findOrCreate({ where: { username: userName }, raw: true }).catch(err => {
+        let user = await User.findOrCreate({ where: { username: userName.toLowerCase() }, raw: true }).catch(err => {
             return res.status(500).send({
                 message: "Error occurred while adding user to a group."
             })
         });
-        let group = await Group.findOrCreate({ where: { name: groupName }, raw: true }).catch(err => {
+        let group = await Group.findOrCreate({ where: { name: groupName.toLowerCase() }, raw: true }).catch(err => {
             return res.status(500).send({
                 message: "Error occurred while adding user to a group."
             })
@@ -47,7 +47,7 @@ const removeUsersFromGroup = async (req, res) => {
     try {
         const { groupName } = req.body;
 
-        let group = await Group.findOrCreate({ where: { name: groupName }, raw: true }).catch(err => {
+        let group = await Group.findOrCreate({ where: { name: groupName.toLowerCase() }, raw: true }).catch(err => {
             return res.status(500).send({
                 message: "Error removing users from a group."
             })
@@ -58,11 +58,11 @@ const removeUsersFromGroup = async (req, res) => {
         })
             .then(num => {
                 if (num == 1) {
-                    res.send({
+                    return res.send({
                         message: "Users were removed successfully!"
                     });
                 } else {
-                    res.send({
+                    return res.send({
                         message: `Cannot delete users from group with id=${id}. Maybe group was not found!`
                     });
                 }
@@ -84,13 +84,13 @@ const addPermission = async (req, res) => {
     try {
         const { name, permissionName, objectName } = req.body;
 
-        let user = await User.findOne({ where: { username: name }, raw: true });
-        let group = await Group.findOne({ where: { name: name }, raw: true });
-        let permission = await Permission.findOrCreate({ where: { name: permissionName }, raw: true });
-        let object = await Object.findOrCreate({ where: { name: objectName }, raw: true });
+        let user = await User.findOne({ where: { username: name.toLowerCase() }, raw: true });
+        let group = await Group.findOne({ where: { name: name.toLowerCase() }, raw: true });
+        let permission = await Permission.findOrCreate({ where: { name: permissionName.toLowerCase() }, raw: true });
+        let object = await Object.findOrCreate({ where: { name: objectName.toLowerCase() }, raw: true });
 
         if (user === null && group === null) {
-            user = await User.create({ username: name, raw: true });
+            user = await User.create({ username: name.toLowerCase(), raw: true });
         }
 
         if (group) {
@@ -137,10 +137,10 @@ const removeAllPermissions = async (req, res) => {
         const { name } = req.body;
 
 
-        let user = await User.findOne({ where: { username: name }, raw: true });
-        let group = await Group.findOne({ where: { name: name }, raw: true });
+        let user = await User.findOne({ where: { username: name.toLowerCase() }, raw: true });
+        let group = await Group.findOne({ where: { name: name.toLowerCase() }, raw: true });
         if (user === null && group === null) {
-            user = await User.create({ username: name, raw: true });
+            user = await User.create({ username: name.toLowerCase(), raw: true });
         }
 
         if (group) {
@@ -196,9 +196,9 @@ const testPermission = async (req, res) => {
     try {
         const { name, permissionName, objectName } = req.body;
 
-        let user = await User.findOrCreate({ where: { username: name }, raw: true });
-        let permission = await Permission.findOrCreate({ where: { name: permissionName }, raw: true });
-        let object = await Object.findOrCreate({ where: { name: objectName }, raw: true });
+        let user = await User.findOrCreate({ where: { username: name.toLowerCase() }, raw: true });
+        let permission = await Permission.findOrCreate({ where: { name: permissionName.toLowerCase() }, raw: true });
+        let object = await Object.findOrCreate({ where: { name: objectName.toLowerCase() }, raw: true });
 
         let sol = await PermObjUser.findOne({
             where: {
@@ -254,8 +254,8 @@ const getPermissions = async (req, res) => {
     try {
         const { name, objectName } = req.body;
 
-        let user = await User.findOrCreate({ where: { username: name }, raw: true });
-        let object = await Object.findOrCreate({ where: { name: objectName }, raw: true });
+        let user = await User.findOrCreate({ where: { username: name.toLowerCase() }, raw: true });
+        let object = await Object.findOrCreate({ where: { name: objectName.toLowerCase() }, raw: true });
         let sol2 = await Permission.findAll({
             include: [{
                 model: PermObjGroup,
@@ -348,14 +348,12 @@ const getAllPermissions = async (req, res) => {
                 attributes: ['name']
             }]
             }});
-            
-            // let sol4 = await sol2.map(function(val){return {"User": val.username,
-            // "Permissions": val.groups.map(cal => cal.group_permissions?.map(val2 => val2.permission.name + " on " + val2.object.name))}});
 
             sol2 = await sol2.map(function(val){return {"User": val.username,
             "Permissions": [...val.user_permissions?.map(val2 => val2.permission.name + " on " + val2.object.name),
             ...val.groups.map(cal => cal.group_permissions?.map(val2 => val2.permission.name + " on " + val2.object.name))]
              }});
+             
             sol3 = await sol3.map(function(val){return {"Group": val.name,
             "Permissions": val.group_permissions?.map(val2 => val2.permission.name + " on " + val2.object.name)}});
 

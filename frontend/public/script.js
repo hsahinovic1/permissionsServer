@@ -23,6 +23,7 @@ permissionsModule.getAllPermissions = function(){
               })
              
               let td = document.createElement('li');
+              td.onclick = permissionsModule.onclickPermissions;
               td.appendChild(document.createTextNode(text.slice(0,-2)));
               document.getElementById("permissions").appendChild(td);
               text="";
@@ -37,6 +38,7 @@ permissionsModule.getAllPermissions = function(){
               })
              
               let td = document.createElement('li');
+              td.onclick = permissionsModule.onclickPermissions;
               td.appendChild(document.createTextNode(text.slice(0,-2)));
               document.getElementById("permissions").appendChild(td);
               text="";
@@ -47,6 +49,8 @@ permissionsModule.getAllPermissions = function(){
 };
 permissionsModule.getGroupUsers = function(){
     
+    
+    document.getElementById("permissions").innerHTML='';
     $.ajax({
         type: "GET",
         url: "/permissions/getUsersFromGroup",
@@ -58,10 +62,11 @@ permissionsModule.getGroupUsers = function(){
             200: function (data) {
               var text ="";
               data.forEach(function(val){ 
-                  text += val.Group + ": "; 
+                  text += val.Group + ":  "; 
             val.Users?.forEach(function(val2){ 
                 text += val2 + ", "; })
                 let td = document.createElement('li');
+                td.onclick = permissionsModule.onclick;
                 td.appendChild(document.createTextNode(text.slice(0,-2)));
                 document.getElementById("group-users").appendChild(td);
                 text="";
@@ -82,7 +87,7 @@ permissionsModule.addGroupUser = function(){
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({userName: username, groupName: groupname}),
+      data: JSON.stringify({userName: username, groupName: groupname}),
       dataType: "json",
       statusCode: {
           404: function () {
@@ -90,21 +95,64 @@ permissionsModule.addGroupUser = function(){
           },
           200: function (data) {
             document.getElementById("log").innerHTML="Korisnik dodan u grupu."
+            document.getElementById("group-users").innerHTML='';
             permissionsModule.getGroupUsers();
         }
         
       }
     }); 
 };
+
+permissionsModule.onclick = function(event) {
+  if (event.target.tagName != "LI") return;
+  let lista = document.getElementById("group-users")
+  let selected = lista.querySelectorAll('.selected');
+  for(let elem of selected) {
+
+    elem.classList.remove('selected');
+  }
+  event.target.classList.add('selected');
+}
+
+permissionsModule.clearGroup = function(){
+  
+  let lista = document.getElementById("group-users")
+  if(lista.querySelectorAll('.selected').length==0)
+  document.getElementById("log").innerHTML="Selektriraj grupu."
+  else{
+  let selected = lista.querySelectorAll('.selected')[0].innerHTML;
+  let group = selected.substring(0,selected.search(':'));
+$.ajax({
+    type: "DELETE",
+    url: "/permissions/removeUsers",
+    contentType: "application/json",
+    data: JSON.stringify({groupName:group}),
+    dataType: "json",
+    statusCode: {
+        404: function () {
+          console.log("404")
+        },
+        200: function (data) {
+          document.getElementById("log").innerHTML="Permisija dodana.";
+          document.getElementById("group-users").innerHTML='';
+          permissionsModule.getGroupUsers();
+      }
+    }
+  }); 
+}
+};
+
 permissionsModule.addPermission = function(){
   let name = document.getElementsByName("name")[0].value;
   let permissionName = document.getElementsByName("permissionName")[0].value;
-  let objectName = document.getElementsByName("permissionName")[0].value;
+  let objectName = document.getElementsByName("objectName")[0].value;
 $.ajax({
     type: "POST",
     url: "/permissions/addPermission",
-    contentType: "application/json",
-    body: {name: name, permissionName: permissionName, objectName: objectName},
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: JSON.stringify({name: name, permissionName: permissionName, objectName: objectName}),
     dataType: "json",
     statusCode: {
         404: function () {
@@ -112,9 +160,47 @@ $.ajax({
         },
         200: function (data) {
           document.getElementById("log").innerHTML="Permisija dodana."
+          document.getElementById("group-users").innerHTML='';
+          permissionsModule.getGroupUsers();
+      }
+      
+    }
+  }); 
+};
+permissionsModule.clearPermissions = function(){
+  
+  let lista = document.getElementById("permissions")
+  if(lista.querySelectorAll('.selected').length==0)
+  document.getElementById("log").innerHTML="Selektriraj usera."
+  else{
+  let selected = lista.querySelectorAll('.selected')[0].innerHTML;
+  let name = selected.substring(0,selected.search(':'));
+$.ajax({
+    type: "DELETE",
+    url: "/permissions/removePermissions",
+    contentType: "application/json",
+    data: JSON.stringify({name:name}),
+    dataType: "json",
+    statusCode: {
+        404: function () {
+          console.log("404")
+        },
+        200: function (data) {
+          document.getElementById("log").innerHTML="Permisije izbrisane.";
+          document.getElementById("group-users").innerHTML='';
           permissionsModule.getGroupUsers();
       }
     }
   }); 
+}
 };
+permissionsModule.onclickPermissions = function(event) {
+  if (event.target.tagName != "LI") return;
+  let lista = document.getElementById("permissions")
+  let selected = lista.querySelectorAll('.selected');
+  for(let elem of selected) {
 
+    elem.classList.remove('selected');
+  }
+  event.target.classList.add('selected');
+}

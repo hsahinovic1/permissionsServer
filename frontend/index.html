@@ -7,18 +7,34 @@
 <body onload="permissionsModule.getGroupUsers()">
 
     <h3>Useri po grupama</h2>
-        <ul id="group-users"  >  
+        
+        <ul  id="group-users"  >  
         </ul>
-        <h3>Sve permisije za usera i grupu</h2>
+        
+        <br>
+        <h3 >Sve permisije za usera i grupu</h2>
         <ul id ="permissions"> 
         </ul>
-        <p id="Log"></p>
+        
+        <h4  id="log"></h4>
         <form  method="post">
-        <input type="text" placeholder="Enter Username" name="userName" required>   
-        <input type="text" placeholder="Enter Group name" name="groupName" required>
-        <button type="button" onclick ="permissionsModule.addGroupUser()">Submit</button>   
+                <input type="text" placeholder="Enter Username" name="userName" required>   
+                <input type="text" placeholder="Enter Group name" name="groupName" required>
+                <button type="button" onclick ="permissionsModule.addGroupUser()">Add user to a group</button>   
         </form>
-    
-
+        
+        <form  method="post">
+                <input type="text" placeholder="Enter Username or Group" name="name" required>   
+                <input type="text" placeholder="Enter Permission" name="permissionName" required>
+                <input type="text" placeholder="Enter object" name="objectName" required>
+                <button type="button" onclick ="permissionsModule.addPermission()">Add Permission</button>   
+        </form>
+        <form  method="post">
+                <button type="button" onclick ="permissionsModule.clearGroup()">Clear Group</button>   
+        </form>
+        <form  method="post">
+                <button type="button" onclick ="permissionsModule.clearPermissions()">Clear Permissions</button>   
+        </form>
+        
 </body>
 </html>

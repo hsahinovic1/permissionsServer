@@ -4,3 +4,19 @@ ul{
     
 }
 ul{overflow:hidden; overflow-y:scroll;}
+.selected {
+    background: #0f0;
+  }
+
+  li {
+    cursor: pointer;
+  }
+  button{
+    margin:5px;
+  }
+  input{
+    margin : 3px;
+  }
+  #log{
+    color: red;
+  }

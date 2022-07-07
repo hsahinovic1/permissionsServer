@@ -1,5 +1,4 @@
 import express from "express";
-import dotenv from "dotenv";
 import sequelize from "./config/database.js";
 import User from "./models/UserModel.js";
 import Group from "./models/GroupModel.js";
@@ -9,18 +8,20 @@ import UserGroup from "./models/UsersGroupsModel.js";
 import PermObjGroup from "./models/PermObjGroupModel.js";
 import PermObjUser from "./models/PermObjUserModel.js";
 import permissionsRoutes from "./routes/permissionsRoutes.js";
-
+import path from 'path';
+const __dirname = path.resolve();
 const app = express()
 
 
-app.get('/',(req,res)=>{
-    res.send("Api is running")
-})
+app.get("/", function (req, res) {
+    res.sendFile(__dirname +"/frontend/index.html");
+  });
 
 app.listen(3000, console.log("Server running on port 3000"))
 
-app.use(express.json())
+app.use(express.json());
 app.use("/permissions", permissionsRoutes);
+app.use(express.static(__dirname + '/frontend'));
 
 app.use(function (req, res, next) {
   res.status(404);
@@ -35,8 +36,6 @@ User.belongsToMany(Group, {
 Group.belongsToMany(User, {
     through: UserGroup
   });
-
-UserGroup.belongsTo(Group);
 
 User.hasMany(PermObjUser, {
     foreignKey: 'user_id'
